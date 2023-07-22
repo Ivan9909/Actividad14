@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body{
+            background: #0A100D;
+        }
+        .navbar{
+            background: #FBFBF2 !important;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">Hospital</a>
+              <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="lstDoctores.html">Doctores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="lstPacientes.html">Pacientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="lstCitas.html">Citas</a>
+                    </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
+    </header>
+    <main>
+        <h1 class="text-center text-white">CITAS</h1>
+        <div class="d-flex">
+            <div class="container">
+                <h2 class="text-center text-white">Crear citas</h2>
+                <form class="text-white">
+                    <div class="mb-3">
+                      <label for="numeroP" class="form-label">Identificación del paciente</label>
+                      <input type="number" class="form-control" id="numeroP">
+                    </div>
+                    <div class="mb-3">
+                      <label for="especializacion_doc" class="form-label">Especialización</label>
+                      <select class="form-control" id="especializacion_doc">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="Medicina general">Medicina general</option>
+                        <option value="Cardiología">Cardiología</option>
+                        <option value="Medicina interna">Medicina interna</option>
+                        <option value="Dermatología">Dermatología</option>
+                        <option value="Rehabilitación física">Rehabilitación física</option>
+                        <option value="Psicología">Psicología</option>
+                        <option value="Odontología">Odontología</option>
+                        <option value="Radiología">Radiología</option>
+                      </select>
+                    </div>
+                    <input type="hidden" class="form-control" id="idForm">
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary col-5" id="agregarCita">Agregar</button>
+                        <div class="col-2"></div>
+                        <button type="submit" class="btn btn-danger col-5" id="editarCita">Editar</button>
+                    </div>
+                  </form>
+                  <div class="mt-3" id="result"></div>
+            </div>
+            <div class="container">
+                <h2 class="text-white text-center">Listado de Citas</h2>
+                <table class="table table-dark table-hover text-center">
+                    <thead>
+                        <tr>
+                            <th>Identificación</th>
+                            <th>Especialización</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyTableC">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function() {
+            lstCitas();
+            createCita();
+            updateCita();
+            updateCitaProcess();
+            deleteCita();
+        });
+
+        function lstCitas(){
+            $.ajax({
+                url: 'http://localhost:3001/citas',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    const dataCitas = data.dataCitas;
+
+                    if (dataCitas && dataCitas.length > 0) {
+                        var tableCitas = $('#tbodyTableC');
+                        dataCitas.forEach(element => {
+                            tableCitas.append('<tr id=' + element._id + '>' +
+                                '<td>' + element.numeroPaciente + '</td>' +
+                                '<td>' + element.especializacion + '</td>'+
+                                '<td><button class="btn btn-success m-2 optionsTable"  id="'+ element._id +'"><i class="bi bi-pencil"></i></button>'+
+                                '<button class="btn btn-danger optionsTableD" id="'+ element._id +'"><i class="bi bi-trash"></i></button></td>'+
+                                '</tr>'
+                            );
+                        });
+                    } else {
+                        $('#tbodyTableC').html('No hay datos de citas disponibles.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    $('#tbodyTableC').html('Ha ocurrido un error al cargar los datos.');
+                }
+            });
+        }
+
+        function createCita(){
+            $('#agregarCita').click(function(event) {
+                event.preventDefault();
+                const numeroPaciente = $('#numeroP').val();
+                const especializacionDoctor = $('#especializacion_doc').val();
+
+                if (numeroPaciente && especializacionDoctor) {
+                    const nuevaCita = {
+                        numeroP: numeroPaciente,
+                        especializacion_doc: especializacionDoctor
+                    };
+
+                    $.ajax({
+                        url: 'http://localhost:3001/citas/crear',
+                        type: 'POST',
+                        data: nuevaCita,
+                        dataType: 'json',
+                        success: function(data) {
+                            var resSuccess = data.message;
+                            $('#tbodyTableC').append('<tr>' +
+                                '<td>' + numeroPaciente + '</td>' +
+                                '<td>' + especializacionDoctor + '</td>'+
+                                '<td><button class="btn btn-success m-2"><i class="bi bi-pencil"></i></button><button class="btn btn-danger"><i class="bi bi-trash"></i></button></td>'+
+                                '</tr>'
+                            );
+
+                            $('#numeroP').val('');
+                            $('#especializacion_doc').val('');
+
+                            $('#result').html('<div class="alert alert-success" role="alert">'+ resSuccess +'</div>');
+                        },
+                        error: function(xhr, status, error) {
+                            $('#result').html('<div class="alert alert-danger" role="alert">Ha ocurrido un error al agregar la cita.</div>');
+                        }
+                    });
+                } else {
+                    $('#result').html('<div class="alert alert-danger" role="alert">Por favor, completa todos los campos antes de agregar la cita.</div>');
+                }
+            });
+        }
+
+        function updateCita(){
+            $('body').on('click', '.optionsTable', function(){
+                var idC = $(this).attr('id');
+
+                $.ajax({
+                    url: 'http://localhost:3001/citas/' + idC,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        const citaInfo = data.dataCita;
+                        $('#idForm').val(citaInfo._id);
+                        $('#numeroP').val(citaInfo.numeroPaciente);
+                        $('#especializacion_doc option[value="'+citaInfo.especializacion +'"]').attr("selected", true);
+                    },
+                    error: function(xhr, status, error) {
+                        $('#result').html('<div class="alert alert-danger" role="alert">Ha ocurrido un error al editar la cita.</div>');
+                    }
+                });
+
+            })
+        }
+
+        function updateCitaProcess(){
+            $('#editarCita').on('click', function(event){
+                event.preventDefault();
+                const idC = $('#idForm').val();
+                const numeroPaciente = $('#numeroP').val();
+                const especializacionDoctor = $('#especializacion_doc').val();
+
+                if (idC && numeroPaciente && especializacionDoctor) {
+                    const citaActualizada = {
+                        numeroP: numeroPaciente,
+                        especializacion: especializacionDoctor
+                    };
+
+                    $.ajax({
+                        url: 'http://localhost:3001/citas/modificar/' + idC,
+                        type: 'PUT',
+                        data: citaActualizada,
+                        dataType: 'json',
+                        success: function(data) {
+                            var resSuccess = data.message;
+                            const citaActualizada = data;
+
+                            const citaID = citaActualizada._id;
+
+                            const filaCita = $('#'+citaID);
+                            if (filaCita.length > 0) {
+                                filaCita.find('td:eq(0)').text(citaActualizada.numeroPaciente);
+                                filaCita.find('td:eq(1)').text(citaActualizada.especializacion);
+                            } else {
+                                console.log(`No se encontró la fila para la cita con ID ${citaID}.`);
+                            }
+
+                            $('#idForm').val('');
+                            $('#numeroP').val('');
+                            $('#especializacion_doc').val('');
+
+                            $('#result').html('<div class="alert alert-success" role="alert">'+ resSuccess +'</div>');
+                        },
+                        error: function(xhr, status, error) {
+                            $('#result').html('<div class="alert alert-danger" role="alert">Ha ocurrido un error al editar la cita.</div>');
+                        }
+                    });
+                } else {
+                    $('#result').html('<div class="alert alert-danger" role="alert">Por favor, completa todos los campos antes de agregar la cita.</div>');
+                }
+            })
+        }
+
+        function deleteCita(){
+            $('body').on('click', '.optionsTableD', function(){
+                var idC = $(this).attr('id');
+
+                $.ajax({
+                    url: 'http://localhost:3001/citas/eliminar/' + idC,
+                    type: 'DELETE',
+                    dataType: 'json',
+                    success: function(data) {
+                        $('#result').html('<div class="alert alert-success" role="alert">'+ data.message +'</div>');
+                    },
+                    error: function(xhr, status, error) {
+                        $('#result').html('<div class="alert alert-danger" role="alert">Ha ocurrido un error al eliminar la cita.</div>');
+                    }
+                });
+
+            })
+        }
+    </script>
+</body>
+</html>
